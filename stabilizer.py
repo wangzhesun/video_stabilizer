@@ -1,11 +1,10 @@
-# the code is borrowed from the link https://learnopencv.com/video-stabilization-using-point-feature-matching-in-opencv/
-#   and is modified by Wangzhe Sun
-# Import numpy and OpenCV
 import numpy as np
 import cv2 as cv
 from utils import util
 import time
 import os
+
+from matplotlib import pyplot as plt
 
 
 class Stabilizer:
@@ -134,16 +133,15 @@ class Stabilizer:
             out = cv.VideoWriter(output_vid, fourcc, 20.0, (cols, rows))
 
         # Pre-define transformation-store array
-        # transforms = np.zeros((n_frames - 1, 3), np.float32)
         transforms = np.zeros((1, 3), np.float32)
         trajectory = np.zeros((1, 3), np.float32)
 
         frames = 0
 
         ret, prev = cap.read()  # Read first frame
+        prev_gray = cv.cvtColor(prev, cv.COLOR_BGR2GRAY)
 
         while cap.isOpened():
-            prev_gray = cv.cvtColor(prev, cv.COLOR_BGR2GRAY)
             prev_pts = util.detect_feature(prev_gray)
 
             success, curr = cap.read()  # Read next frame
@@ -169,110 +167,50 @@ class Stabilizer:
             da = np.arctan2(H[1][0], H[0][0])  # Extract rotation angle
             transforms = np.append(transforms, [[dx, dy, da]], axis=0)
 
-            # transforms[i] = [dx, dy, da]  # Store transformation
+            x = trajectory[-1, 0] + dx
+            y = trajectory[-1, 1] + dy
+            a = trajectory[-1, 2] + da
+            trajectory = np.append(trajectory, [[x, y, a]], axis=0)
 
-            prev_gray = curr_gray  # Move to next frame
-
-            print("Frame: " + str(frames + 1) + " -  Tracked points : " + str(len(prev_pts)))
-
-            trajectory = np.append(trajectory, [trajectory[-1, :] + transforms[-1, :]], axis=0)
-            # trajectory = np.append(trajectory, [np.cumsum(transforms[1:,:], axis=0)])
-
-            smoothed_trajectory = util.smooth(trajectory[1:, :])
-            # Calculate difference in smoothed_trajectory and trajectory
-            difference = smoothed_trajectory - trajectory[1:, :]
-            # Calculate newer transformation array
-            transforms_smooth = transforms[1:, :] + difference
+            if len(trajectory) > 200:
+                smoothed_trajectory = util.smooth(trajectory[-200:, :])
+                # Calculate difference in smoothed_trajectory and trajectory
+                difference = smoothed_trajectory - trajectory[-200:, :]
+                # Calculate newer transformation array
+                transforms_smooth = transforms[-200:, :] + difference
+            else:
+                smoothed_trajectory = util.smooth(trajectory[1:, :])
+                # Calculate difference in smoothed_trajectory and trajectory
+                difference = smoothed_trajectory - trajectory[1:, :]
+                # Calculate newer transformation array
+                transforms_smooth = transforms[1:, :] + difference
 
             frame_stabilized = util.transform(transforms_smooth, -1, curr, w, h)
+
             if self.output_:
                 out.write(frame_stabilized)
 
             frame_out = cv.hconcat([curr, frame_stabilized])
             if frame_out.shape[1] > 1920:
-                frame_out = cv.resize(frame_out,
-                                      (int(frame_out.shape[1] / 2),
-                                       int(frame_out.shape[0] / 2)))
+                frame_out = cv.resize(frame_out, (int(frame_out.shape[1] / 2),
+                                                  int(frame_out.shape[0] / 2)))
             cv.imshow("Before and After", frame_out)
 
-            cv.waitKey(10)
+            print("Frame: " + str(frames + 1) + " -  Tracked points : " + str(len(prev_pts)))
+            prev_gray = curr_gray
+            frames += 1
 
-            prev = curr
+            key = cv.waitKey(1)
+            if key == 27:
+                if self.output_:
+                    out.release()
+                cap.release()
+                cv.destroyAllWindows()
+                break
 
         if self.output_:
             out.release()
 
-            # for i in range(n_frames - 2):
-            #     # Detect feature points in previous frame
-            #     prev_pts = util.detect_feature(prev_gray)
-            #
-            #     success, curr = cap.read()  # Read next frame
-            #     if not success:
-            #         break
-            #
-            #     curr_gray = cv.cvtColor(curr, cv.COLOR_BGR2GRAY)
-            #
-            #     # Calculate optical flow (i.e. track feature points)
-            #     curr_pts, status, err = cv.calcOpticalFlowPyrLK(prev_gray, curr_gray, prev_pts,
-            #                                                     None)
-            #     assert prev_pts.shape == curr_pts.shape
-            #
-            #     # Filter only valid points
-            #     idx = np.where(status == 1)[0]
-            #     prev_pts = prev_pts[idx]
-            #     curr_pts = curr_pts[idx]
-            #
-            #     # Find affine transformation matrix
-            #     [H, _] = cv.estimateAffinePartial2D(prev_pts, curr_pts)
-            #
-            #     # Extract translation
-            #     dx = H[0][2]
-            #     dy = H[1][2]
-            #     da = np.arctan2(H[1][0], H[0][0])  # Extract rotation angle
-            #     transforms[i] = [dx, dy, da]  # Store transformation
-            #
-            #     prev_gray = curr_gray  # Move to next frame
-            #
-            #     print("Frame: " + str(i + 1) + "/" + str(
-            #         n_frames - 2) + " -  Tracked points : " + str(
-            #         len(prev_pts)))
-
-            # Compute trajectory using cumulative sum of transformations
-            # trajectory = np.cumsum(transforms, axis=0)
-            # smoothed_trajectory = util.smooth(trajectory)
-            # # Calculate difference in smoothed_trajectory and trajectory
-            # difference = smoothed_trajectory - trajectory
-            # # Calculate newer transformation array
-            # transforms_smooth = transforms + difference
-            #
-            # cap.set(cv.CAP_PROP_POS_FRAMES, 0)  # Reset stream to first frame
-            #
-            # # Write n_frames-1 transformed frames
-            # for i in range(n_frames - 2):
-            #     # Read next frame
-            #     success, frame = cap.read()
-            #     if not success:
-            #         break
-            #
-            #     frame_stabilized = util.transform(transforms_smooth, i, frame, w, h)
-            #     if self.output_:
-            #         out.write(frame_stabilized)
-            #
-            #     frame_out = cv.hconcat([frame, frame_stabilized])
-            #     if frame_out.shape[1] > 1920:
-            #         frame_out = cv.resize(frame_out,
-            #                               (int(frame_out.shape[1] / 2),
-            #                                int(frame_out.shape[0] / 2)))
-            #     cv.imshow("Before and After", frame_out)
-            #
-            #     cv.waitKey(10)
-            #
-            # end = time.time()
-            # duration = end - start
-            # print("Video stabilized in {} seconds\n".format(round(duration, 2)))
-            #
-            # if self.output_:
-            #     out.release()
 
     def stabilize(self, input_vid="", output_path=""):
         if self.mode_ == 'video':
@@ -283,6 +221,8 @@ class Stabilizer:
 
 if __name__ == '__main__':
     stabilizer = Stabilizer()
-    # stabilizer.set_mode('live', output=0)
-    stabilizer.set_mode('video', output=1)
-    stabilizer.stabilize('./videos/video1.mp4','./det')
+    # stabilizer.set_mode('video', output=0)
+    # stabilizer.stabilize('./videos/video1.mp4','./det')
+
+    stabilizer.set_mode('live', output=0)
+    stabilizer.stabilize()
