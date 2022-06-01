@@ -1,6 +1,6 @@
 import numpy as np
 import cv2 as cv
-from ssc import ssc
+from utils.ssc import ssc
 
 
 SMOOTHING_RADIUS = 30   # the greater, the smoother, the more likely of black border
