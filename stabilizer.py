@@ -5,6 +5,7 @@ import numpy as np
 import cv2 as cv
 from utils import util
 import time
+import os
 
 
 class Stabilizer:
@@ -16,7 +17,7 @@ class Stabilizer:
         self.mode_ = mode
         self.output_ = output
 
-    def stabilize_video(self, input_vid, output_vid):
+    def stabilize_video(self, input_vid, output_path):
         cap = cv.VideoCapture(input_vid)  # Read input video
         assert cap.isOpened(), 'Cannot capture source'
 
@@ -27,9 +28,13 @@ class Stabilizer:
 
         # Set up output video
         if self.output_:
+            # make the destination directory if not exist already
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
             cols = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
             rows = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
             fourcc = cv.VideoWriter_fourcc(*'MJPG')  # Define the codec for output video
+            output_vid = '{}/det_{}.avi'.format(output_path, input_vid.split('/')[-1].split('.')[0])
             out = cv.VideoWriter(output_vid, fourcc, 20.0, (cols, rows))
 
         _, prev = cap.read()  # Read first frame
@@ -109,7 +114,7 @@ class Stabilizer:
         if self.output_:
             out.release()
 
-    def stabilize_live(self, output_vid):
+    def stabilize_live(self, output_path):
         cap = cv.VideoCapture(0)
         assert cap.isOpened(), 'Cannot capture source'
 
@@ -119,9 +124,13 @@ class Stabilizer:
 
         # Set up output video
         if self.output_:
+            # make the destination directory if not exist already
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
             cols = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
             rows = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
             fourcc = cv.VideoWriter_fourcc(*'MJPG')  # Define the codec for output video
+            output_vid = '{}/det_live.avi'.format(output_path)
             out = cv.VideoWriter(output_vid, fourcc, 20.0, (cols, rows))
 
         # Pre-define transformation-store array
@@ -265,14 +274,15 @@ class Stabilizer:
             # if self.output_:
             #     out.release()
 
-    def stabilize(self, input_vid="", output_vid=""):
+    def stabilize(self, input_vid="", output_path=""):
         if self.mode_ == 'video':
-            self.stabilize_video(input_vid, output_vid)
+            self.stabilize_video(input_vid, output_path)
         else:
-            self.stabilize_live(output_vid)
+            self.stabilize_live(output_path)
 
 
 if __name__ == '__main__':
     stabilizer = Stabilizer()
-    stabilizer.set_mode('live', 0)
-    stabilizer.stabilize()
+    # stabilizer.set_mode('live', output=0)
+    stabilizer.set_mode('video', output=1)
+    stabilizer.stabilize('./videos/video1.mp4','./det')
