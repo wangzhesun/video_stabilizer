@@ -1,9 +1,10 @@
 import numpy as np
 import cv2 as cv
 from utils.ssc import ssc
+from matplotlib import pyplot as plt
 
 
-SMOOTHING_RADIUS = 30   # the greater, the smoother, the more likely of black border
+SMOOTHING_RADIUS = 100   # the greater, the smoother, the more likely of black border
 
 
 def moving_average(curve, radius):
@@ -27,8 +28,8 @@ def smooth(trajectory):
 def fix_border(frame):
     s = frame.shape
     # Scale the image 4% without moving the center
-    # T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.04)
-    T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.2)
+    T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.04)
+    # T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.2)
     frame = cv.warpAffine(frame, T, (s[1], s[0]))
     return frame
 
@@ -62,3 +63,26 @@ def transform(transforms_smooth, index, frame, w, h):
     # Apply affine wrapping to the given frame
     frame_stabilized = cv.warpAffine(frame, H, (w, h))
     return fix_border(frame_stabilized)  # Fix border artifacts
+
+
+def compare_trajectory(original, stabilized):
+    plt.figure()
+    plt.plot(range(len(original)), np.reshape(original[:, 0], (-1, 1)), label='original x')
+    plt.plot(range(len(original)), np.reshape(stabilized[:, 0], (-1, 1)),
+             label='stabilized x')
+    plt.legend(loc="best")
+    plt.show()
+
+    plt.figure()
+    plt.plot(range(len(original)), np.reshape(original[:, 1], (-1, 1)), label='original y')
+    plt.plot(range(len(original)), np.reshape(stabilized[:, 1], (-1, 1)),
+             label='stabilized y')
+    plt.legend(loc="best")
+    plt.show()
+
+    plt.figure()
+    plt.plot(range(len(original)), np.reshape(original[:, 2], (-1, 1)), label='original a')
+    plt.plot(range(len(original)), np.reshape(stabilized[:, 2], (-1, 1)),
+             label='stabilized a')
+    plt.legend(loc="best")
+    plt.show()
