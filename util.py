@@ -33,26 +33,13 @@ def fix_border(frame):
     return frame
 
 
-def detect_feature(frame, feature_method):
+def detect_feature(frame):
     s = frame.shape
-    if feature_method == 'o':
-        orb_obj = cv.ORB_create()
-        prev_pts = orb_obj.detect(frame, None)
-        prev_pts = sorted(prev_pts, key=lambda x: x.response, reverse=True)
-        prev_pts = ssc(prev_pts, 1000, 50, s[1], s[0])
-        prev_pts = cv.KeyPoint_convert(prev_pts)
-    elif feature_method == 's':
-        sift_obj = cv.SIFT_create()
-        prev_pts = sift_obj.detect(frame, None)
-        prev_pts = ssc(prev_pts, 1000, 50, s[1], s[0])
-        prev_pts = cv.KeyPoint_convert(prev_pts)
-    elif feature_method == 'f':
-        fast = cv.FastFeatureDetector_create()
-        prev_pts = fast.detect(frame, None)
-        prev_pts = cv.KeyPoint_convert(prev_pts)
-    else:
-        prev_pts = cv.goodFeaturesToTrack(frame, maxCorners=200, qualityLevel=0.01,
-                                          minDistance=30, blockSize=3)
+    orb_obj = cv.ORB_create()
+    prev_pts = orb_obj.detect(frame, None)
+    prev_pts = sorted(prev_pts, key=lambda x: x.response, reverse=True)
+    prev_pts = ssc(prev_pts, 1000, 50, s[1], s[0])
+    prev_pts = cv.KeyPoint_convert(prev_pts)
 
     return prev_pts
 
