@@ -67,22 +67,28 @@ def transform(transforms_smooth, index, frame, w, h):
 
 def compare_trajectory(original, stabilized):
     plt.figure()
-    plt.plot(range(len(original)), np.reshape(original[:, 0], (-1, 1)), label='original x')
+    plt.plot(range(len(original)), np.reshape(original[:, 0], (-1, 1)), label='original video')
     plt.plot(range(len(original)), np.reshape(stabilized[:, 0], (-1, 1)),
-             label='stabilized x')
+             label='stabilized video')
     plt.legend(loc="best")
+    plt.xlabel('frames')
+    plt.ylabel('x variation')
     plt.show()
 
     plt.figure()
-    plt.plot(range(len(original)), np.reshape(original[:, 1], (-1, 1)), label='original y')
+    plt.plot(range(len(original)), np.reshape(original[:, 1], (-1, 1)), label='original video')
     plt.plot(range(len(original)), np.reshape(stabilized[:, 1], (-1, 1)),
-             label='stabilized y')
+             label='stabilized video')
     plt.legend(loc="best")
+    plt.xlabel('frames')
+    plt.ylabel('y variation')
     plt.show()
 
     plt.figure()
-    plt.plot(range(len(original)), np.reshape(original[:, 2], (-1, 1)), label='original a')
+    plt.plot(range(len(original)), np.reshape(original[:, 2], (-1, 1)), label='original video')
     plt.plot(range(len(original)), np.reshape(stabilized[:, 2], (-1, 1)),
-             label='stabilized a')
+             label='stabilized video')
     plt.legend(loc="best")
+    plt.xlabel('frames')
+    plt.ylabel('a variation')
     plt.show()
