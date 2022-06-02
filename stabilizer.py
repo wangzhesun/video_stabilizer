@@ -4,8 +4,6 @@ from utils import util
 import time
 import os
 
-from matplotlib import pyplot as plt
-
 
 class Stabilizer:
     def __init__(self):
@@ -113,6 +111,8 @@ class Stabilizer:
         if self.output_:
             out.release()
 
+        return trajectory, smoothed_trajectory
+
     def stabilize_live(self, output_path):
         cap = cv.VideoCapture(0)
         assert cap.isOpened(), 'Cannot capture source'
@@ -135,6 +135,7 @@ class Stabilizer:
         # Pre-define transformation-store array
         transforms = np.zeros((1, 3), np.float32)
         trajectory = np.zeros((1, 3), np.float32)
+        smoothed_trajectory = np.zeros((1, 3), np.float32)
 
         frames = 0
 
@@ -172,20 +173,46 @@ class Stabilizer:
             a = trajectory[-1, 2] + da
             trajectory = np.append(trajectory, [[x, y, a]], axis=0)
 
-            if len(trajectory) > 200:
-                smoothed_trajectory = util.smooth(trajectory[-200:, :])
-                # Calculate difference in smoothed_trajectory and trajectory
-                difference = smoothed_trajectory - trajectory[-200:, :]
-                # Calculate newer transformation array
-                transforms_smooth = transforms[-200:, :] + difference
-            else:
-                smoothed_trajectory = util.smooth(trajectory[1:, :])
-                # Calculate difference in smoothed_trajectory and trajectory
-                difference = smoothed_trajectory - trajectory[1:, :]
-                # Calculate newer transformation array
-                transforms_smooth = transforms[1:, :] + difference
+            # if len(trajectory) > 200:
+            #     # smoothed_trajectory = util.smooth(trajectory[-200:, :])
+            #     smoothed_trajectory = np.append(smoothed_trajectory,
+            #                                     [util.smooth_live(trajectory[-200:, :])[-1, :]], axis=0)
+            #     # smoothed_trajectory[1:, :] = util.smooth(smoothed_trajectory[1:, :])
+            #     # Calculate difference in smoothed_trajectory and trajectory
+            #     difference = smoothed_trajectory[-1, :] - trajectory[-1, :]
+            #     # Calculate newer transformation array
+            #     transforms_smooth = transforms[-1:, :] + difference
+            # else:
+            #     # smoothed_trajectory = util.smooth(trajectory[1:, :])
+            #     smoothed_trajectory = np.append(smoothed_trajectory,
+            #                                     [util.smooth_live(trajectory[1:, :])[-1, :]], axis=0)
+            #     # smoothed_trajectory[1:, :] = util.smooth(smoothed_trajectory[1:, :])
+            #     # Calculate difference in smoothed_trajectory and trajectory
+            #     difference = smoothed_trajectory[-1, :] - trajectory[-1, :]
+            #     # Calculate newer transformation array
+            #     transforms_smooth = transforms[-1:, :] + difference
 
-            frame_stabilized = util.transform(transforms_smooth, -1, curr, w, h)
+            smoothed_trajectory = np.append(smoothed_trajectory,
+                                            [util.smooth(trajectory[1:, :])[-1, :]], axis=0)
+            smoothed_trajectory[1:, :] = util.smooth(smoothed_trajectory[1:, :])
+            difference = smoothed_trajectory[-1, :] - trajectory[-1, :]
+            transforms_smooth = transforms[-1:, :] + difference
+
+
+
+            ##################################
+            # if frames > 30:
+            #     smoothed_trajectory = np.append(smoothed_trajectory,
+            #                                     [util.smooth(trajectory[1:, :])[-1, :]], axis=0)
+            #     new_smoothed_trajectory = util.smooth(smoothed_trajectory[1:, :])
+            #     difference = new_smoothed_trajectory[-30, :] - trajectory[-30, :]
+            #     transforms_smooth = transforms[-30:, :] + difference
+            ##################################
+
+
+            frame_stabilized = util.transform(transforms_smooth, 0, curr, w, h)
+
+            # frame_stabilized = util.transform(transforms_smooth, -1, curr, w, h)
 
             if self.output_:
                 out.write(frame_stabilized)
@@ -211,18 +238,21 @@ class Stabilizer:
         if self.output_:
             out.release()
 
+        return trajectory, smoothed_trajectory
 
     def stabilize(self, input_vid="", output_path=""):
         if self.mode_ == 'video':
-            self.stabilize_video(input_vid, output_path)
+            return self.stabilize_video(input_vid, output_path)
         else:
-            self.stabilize_live(output_path)
+            return self.stabilize_live(output_path)
 
 
 if __name__ == '__main__':
     stabilizer = Stabilizer()
     # stabilizer.set_mode('video', output=0)
-    # stabilizer.stabilize('./videos/video1.mp4','./det')
+    # original_trajectory, stabilized_trajectory = stabilizer.stabilize('./videos/video1.mp4','./det')
 
     stabilizer.set_mode('live', output=0)
-    stabilizer.stabilize()
+    original_trajectory, stabilized_trajectory = stabilizer.stabilize()
+
+    util.compare_trajectory(original_trajectory, stabilized_trajectory)

@@ -3,13 +3,12 @@ import cv2 as cv
 from utils.ssc import ssc
 from matplotlib import pyplot as plt
 
+SMOOTHING_RADIUS = 30  # the greater, the smoother, the more likely of black border
 
-SMOOTHING_RADIUS = 100   # the greater, the smoother, the more likely of black border
 
-
-def moving_average(curve, radius):
+def moving_average(curve, radius, alpha=1):
     window_size = 2 * radius + 1
-    f = np.ones(window_size) / window_size  # Define the filter
+    f = np.ones(window_size) / (window_size*alpha)  # Define the filter
 
     curve_pad = np.lib.pad(curve, (radius, radius), 'edge')  # Add padding to the boundaries
     curve_smoothed = np.convolve(curve_pad, f, mode='same')  # Apply convolution
@@ -17,19 +16,28 @@ def moving_average(curve, radius):
     return curve_smoothed  # return smoothed curve
 
 
+def smooth_live(trajectory):
+    new_trajectory = np.copy(trajectory)
+
+    for i in range(3):  # Filter the x, y and angle curves
+        new_trajectory[:, i] = moving_average(trajectory[:, i], SMOOTHING_RADIUS)
+        new_trajectory[:, i] = moving_average(new_trajectory[:, i], len(trajectory), alpha=2)
+    return new_trajectory
+
+
 def smooth(trajectory):
     new_trajectory = np.copy(trajectory)
 
     for i in range(3):  # Filter the x, y and angle curves
-        new_trajectory[:, i] = moving_average(trajectory[:, i], radius=SMOOTHING_RADIUS)
+        new_trajectory[:, i] = moving_average(trajectory[:, i], SMOOTHING_RADIUS)
     return new_trajectory
 
 
 def fix_border(frame):
     s = frame.shape
     # Scale the image 4% without moving the center
-    T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.04)
-    # T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.2)
+    # T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.04)
+    T = cv.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.1)
     frame = cv.warpAffine(frame, T, (s[1], s[0]))
     return frame
 
