@@ -11,10 +11,23 @@ class Stabilizer:
         self.output_ = 0
 
     def set_mode(self, mode, output=0):
+        """
+        set the mode of the stabilizer. Possible mode are 'video' and 'live'
+
+        :param mode: new mode to be set
+        :param output: flag indicating whether a output video is needed
+        """
         self.mode_ = mode
         self.output_ = output
 
     def stabilize_video(self, input_vid, output_path):
+        """
+        stabilize videos
+
+        :param input_vid: input video
+        :param output_path: path for the output video
+        :return: trajectories for the original and stabilized videos
+        """
         cap = cv.VideoCapture(input_vid)  # Read input video
         assert cap.isOpened(), 'Cannot capture source'
 
@@ -114,6 +127,12 @@ class Stabilizer:
         return trajectory, smoothed_trajectory
 
     def stabilize_live(self, output_path):
+        """
+        stabilize real-time frames
+
+        :param output_path: path for the output video
+        :return: trajectories for the original and stabilized videos
+        """
         cap = cv.VideoCapture(0)
         assert cap.isOpened(), 'Cannot capture source'
 
@@ -182,7 +201,8 @@ class Stabilizer:
 
             print(len(trajectory))
             smoothed_trajectory = np.append(smoothed_trajectory,
-                                            [util.smooth(trajectory[-delay:, :], live=1)[-delay, :]],
+                                            [util.smooth(trajectory[-delay:, :], live=1)[-delay,
+                                             :]],
                                             axis=0)
             smoothed_trajectory = util.smooth(smoothed_trajectory)
 
@@ -220,6 +240,13 @@ class Stabilizer:
         return trajectory, smoothed_trajectory
 
     def stabilize(self, input_vid="", output_path=""):
+        """
+        stabilize according to the mode of the stabilizer
+
+        :param input_vid: input video
+        :param output_path: path for the output video
+        :return: trajectories for the original and stabilized videos
+        """
         if self.mode_ == 'video':
             return self.stabilize_video(input_vid, output_path)
         else:
