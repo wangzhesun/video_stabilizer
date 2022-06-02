@@ -6,9 +6,16 @@ from matplotlib import pyplot as plt
 SMOOTHING_RADIUS = 30  # the greater, the smoother, the more likely of black border
 
 
-def moving_average(curve, radius, alpha=1):
+def moving_average(curve, radius):
+    """
+    smooth function curve provided
+
+    :param curve: function curve to be smoothed
+    :param radius: number of frames for the smoothing process
+    :return: smoothed function curve
+    """
     window_size = 2 * radius + 1
-    f = np.ones(window_size) / (window_size*alpha)  # Define the filter
+    f = np.ones(window_size) / window_size  # Define the filter
 
     curve_pad = np.lib.pad(curve, (radius, radius), 'edge')  # Add padding to the boundaries
     curve_smoothed = np.convolve(curve_pad, f, mode='same')  # Apply convolution
@@ -16,20 +23,14 @@ def moving_average(curve, radius, alpha=1):
     return curve_smoothed  # return smoothed curve
 
 
-def smooth_live(trajectory):
+def smooth(trajectory, live=0):
     new_trajectory = np.copy(trajectory)
 
     for i in range(3):  # Filter the x, y and angle curves
-        new_trajectory[:, i] = moving_average(trajectory[:, i], SMOOTHING_RADIUS)
-        new_trajectory[:, i] = moving_average(new_trajectory[:, i], len(trajectory), alpha=2)
-    return new_trajectory
-
-
-def smooth(trajectory):
-    new_trajectory = np.copy(trajectory)
-
-    for i in range(3):  # Filter the x, y and angle curves
-        new_trajectory[:, i] = moving_average(trajectory[:, i], SMOOTHING_RADIUS)
+        if live == 0:
+            new_trajectory[:, i] = moving_average(trajectory[:, i], SMOOTHING_RADIUS)
+        else:
+            new_trajectory[:, i] = moving_average(trajectory[:, i], SMOOTHING_RADIUS+20)
     return new_trajectory
 
 
@@ -74,9 +75,11 @@ def transform(transforms_smooth, index, frame, w, h):
 
 
 def compare_trajectory(original, stabilized):
+    stabilize_size = len(stabilized)
+
     plt.figure()
-    plt.plot(range(len(original)), np.reshape(original[:, 0], (-1, 1)), label='original video')
-    plt.plot(range(len(original)), np.reshape(stabilized[:, 0], (-1, 1)),
+    plt.plot(range(stabilize_size), np.reshape(original[-stabilize_size:, 0], (-1, 1)), label='original video')
+    plt.plot(range(stabilize_size), np.reshape(stabilized[:, 0], (-1, 1)),
              label='stabilized video')
     plt.legend(loc="best")
     plt.xlabel('frames')
@@ -84,8 +87,8 @@ def compare_trajectory(original, stabilized):
     plt.show()
 
     plt.figure()
-    plt.plot(range(len(original)), np.reshape(original[:, 1], (-1, 1)), label='original video')
-    plt.plot(range(len(original)), np.reshape(stabilized[:, 1], (-1, 1)),
+    plt.plot(range(stabilize_size), np.reshape(original[-stabilize_size:, 1], (-1, 1)), label='original video')
+    plt.plot(range(stabilize_size), np.reshape(stabilized[:, 1], (-1, 1)),
              label='stabilized video')
     plt.legend(loc="best")
     plt.xlabel('frames')
@@ -93,8 +96,8 @@ def compare_trajectory(original, stabilized):
     plt.show()
 
     plt.figure()
-    plt.plot(range(len(original)), np.reshape(original[:, 2], (-1, 1)), label='original video')
-    plt.plot(range(len(original)), np.reshape(stabilized[:, 2], (-1, 1)),
+    plt.plot(range(stabilize_size), np.reshape(original[-stabilize_size:, 2], (-1, 1)), label='original video')
+    plt.plot(range(stabilize_size), np.reshape(stabilized[:, 2], (-1, 1)),
              label='stabilized video')
     plt.legend(loc="best")
     plt.xlabel('frames')
