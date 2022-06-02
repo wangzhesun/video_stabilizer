@@ -1,8 +1,8 @@
-# This is the implemetation of the [paper](
-# https://www.researchgate.net/publication/323388062_
-# Efficient_adaptive_non-maximal_suppression_algorithms_for_homogeneous_spatial_keypoint_distribution)
-# "Efficient adaptive non-maximal suppression algorithms for homogeneous spatial keypoint distribution"
-# that is published in Pattern Recognition Letters (PRL).
+# This is the implemetation of the [paper]( https://www.researchgate.net/publication/323388062_
+# Efficient_adaptive_non
+# -maximal_suppression_algorithms_for_homogeneous_spatial_keypoint_distribution) "Efficient
+# adaptive non-maximal suppression algorithms for homogeneous spatial keypoint distribution" that
+# is published in Pattern Recognition Letters (PRL).
 #
 # Downloaded from https://github.com/BAILOOL/ANMS-Codes
 
@@ -20,7 +20,8 @@ def ssc(keypoints, num_ret_points, tolerance, cols, rows):
     sol1 = -round(float(exp1 + exp3) / exp4)  # first solution
     sol2 = -round(float(exp1 - exp3) / exp4)  # second solution
 
-    high = sol1 if (sol1 > sol2) else sol2  # binary search range initialization with positive solution
+    # binary search range initialization with positive solution
+    high = sol1 if (sol1 > sol2) else sol2
     low = math.floor(math.sqrt(len(keypoints) / num_ret_points))
 
     prev_width = -1
@@ -34,7 +35,8 @@ def ssc(keypoints, num_ret_points, tolerance, cols, rows):
 
     while not complete:
         width = low + (high - low) / 2
-        if width == prev_width or low > high:  # needed to reassure the same radius is not repeated again
+        # needed to reassure the same radius is not repeated again
+        if width == prev_width or low > high:
             result_list = result  # return the keypoints from the previous iteration
             break
 
@@ -45,7 +47,8 @@ def ssc(keypoints, num_ret_points, tolerance, cols, rows):
         result = []
 
         for i in range(len(keypoints)):
-            row = int(math.floor(keypoints[i].pt[1] / c))  # get position of the cell current point is located at
+            # get position of the cell current point is located at
+            row = int(math.floor(keypoints[i].pt[1] / c))
             col = int(math.floor(keypoints[i].pt[0] / c))
             if not covered_vec[row][col]:  # if the cell is not covered
                 result.append(i)
