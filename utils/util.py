@@ -63,7 +63,7 @@ def detect_feature(frame):
     :return: feature points from the image frame
     """
     s = frame.shape
-    orb_obj = cv.ORB_create()
+    orb_obj = cv.ORB_create(nfeatures=10000)
     prev_pts = orb_obj.detect(frame, None)
     prev_pts = sorted(prev_pts, key=lambda x: x.response, reverse=True)
     prev_pts = ssc(prev_pts, 1000, 50, s[1], s[0])

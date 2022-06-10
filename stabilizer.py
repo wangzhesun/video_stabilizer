@@ -15,7 +15,7 @@ class Stabilizer:
         set the mode of the stabilizer. Possible mode are 'video' and 'live'
 
         :param mode: new mode to be set
-        :param output: flag indicating whether a output video is needed
+        :param output: flag indicating whether an output video is needed
         """
         self.mode_ = mode
         self.output_ = output
@@ -255,11 +255,11 @@ class Stabilizer:
 
 if __name__ == '__main__':
     stabilizer = Stabilizer()
-    # stabilizer.set_mode('video', output=1)
+    # stabilizer.set_mode('video', output=0)
     # original_trajectory, stabilized_trajectory = stabilizer.stabilize('./videos/video1.mp4',
     #                                                                   './det')
 
-    stabilizer.set_mode('live', output=1)
+    stabilizer.set_mode('live', output=0)
     original_trajectory, stabilized_trajectory = stabilizer.stabilize(output_path='./det')
 
     util.compare_trajectory(original_trajectory, stabilized_trajectory)
